@@ -12,32 +12,37 @@ class Runner():
 		self.memory = []
 
 		self.view_dim = view_dim
-		self.state_dim = (self.view_dim**2 * 4) + 2 + 4
-		self.hidden_dim = 128
+		# self.state_dim = (self.view_dim**2 * 4) + 2 + 4
+		self.state_dim = self.view_dim**2 + 2
+		self.hidden_dim = 256
 		self.action_dim = 4
 
 		self.model = QModel(self.state_dim, self.hidden_dim, self.action_dim)
-		self.trainer = Train(self.model, 0.001, 0.9)
+		self.trainer = Train(self.model, 0.005, 0.9)
 		
 
-	def remember(self, state, action, reward, next_state, done):
-		self.memory.append((state, action, reward, next_state, done))
+	def remember(self, state, action, reward, next_state, dead):
+		self.memory.append((state, action, reward, next_state, dead))
 	
 	def train_memory(self, long=False):
 		if not long:
 			self.trainer.train_step(self.memory[-1][0], self.memory[-1][1], self.memory[-1][2], self.memory[-1][3], self.memory[-1][4])
 		else:
-			for state, action, reward, next_state, done in self.memory:
-				self.trainer.train_step(state, action, reward, next_state, done)
+			for state, action, reward, next_state, dead in self.memory:
+				self.trainer.train_step(state, action, reward, next_state, dead)
 			self.memory = []
 	
 	def act(self, state):
-		pred = self.model(torch.tensor(state, dtype=torch.float))
-		action = torch.argmax(pred).item()
-		print(pred, action)
 		move = [0, 0, 0, 0]
-		move[random.randint(0, 3)] = 1
+		if random.random() < 0.1:
+			move[random.randint(0, 3)] = 1
+		else:
+			pred = self.model(torch.tensor(state, dtype=torch.float))
+			action = torch.argmax(pred).item()
+			print(pred, action)
+			move[action] = 1
 		return move
+
 
 def training_loop():
 	score = 0
@@ -48,14 +53,19 @@ def training_loop():
 	game = QSnake()
 
 	while True:
-		time.sleep(0.1)
+		# time.sleep(0.005)
+
 		os.system('clear')
 		game.display_board()
+
 		print(f'Score: {score} | Record: {record} | Steps: {steps}')
 		print(f'Direction: {game.direction}')
+
 		state_old = game.get_state(view_dim)
 		final_move = runner.act(state_old)
+
 		print(f'Final Move: {final_move}')
+
 		reward, dead, score = game.step(final_move)
 		state_new = game.get_state(view_dim)
 
@@ -66,14 +76,12 @@ def training_loop():
 		if dead:
 			game.setup()
 			runner.n_game += 1
-			for _ in range(5):
-				runner.train_memory(long=True)
+			runner.train_memory(long=True)
 			if score > record:
 				record = score
+			print(f'Game {runner.n_game + 1} | Score: {score} | Record: {record}')
 			score = 0
 			steps = 0
-
-			print(f'Game {runner.n_game + 1} | Score: {score} | Record: {record}')
 		else:
 			steps += 1
 
