@@ -7,6 +7,7 @@ class Direction():
 	RIGHT = [0, 0, 0, 1]
 
 ZONE_SIZE = 10
+BEGIN_LENGTH = 3
 
 class QSnake:
 	def __init__(self, w=ZONE_SIZE, h=ZONE_SIZE):
@@ -49,26 +50,27 @@ class QSnake:
 	
 	def step(self, choice: Direction):
 		self.move(choice)
-		
+		reward = 0
+
 		if self.snake[-1] == self.food:
 			self.gen_food()
+			reward = 10
 		else:
 			self.snake.pop(0)
 		
 		if self.snake[-1][0] >= self.board.shape[0] or self.snake[-1][0] < 0 or self.snake[-1][1] >= self.board.shape[1] or self.snake[-1][1] < 0:
-			return False, len(self.snake)
+			return -10, True, len(self.snake) - BEGIN_LENGTH
 		
 		if self.snake[-1] in self.snake[:-1]:
-			return False, len(self.snake)
+			return -10, True, len(self.snake) - BEGIN_LENGTH
 		
 		self.board = np.zeros((self.w, self.h), dtype=np.int8)
 		for x, y in self.snake:
 			self.board[x, y] = 1
 		self.board[self.food] = 2
-		return True, len(self.snake)
+		return reward, False, len(self.snake) - BEGIN_LENGTH
 	
-	def get_state(self):
-		view_dim = 3
+	def get_state(self, view_dim=3):
 		left_bound_val = 0 - view_dim // 2
 		right_bound_val = view_dim // 2 + 1
 		head = self.snake[-1]

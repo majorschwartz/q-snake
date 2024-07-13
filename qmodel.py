@@ -2,11 +2,11 @@ import torch
 import torch.nn as nn
 
 class QModel(nn.Module):
-	def __init__(self, state_dim, action_dim):
+	def __init__(self, state_dim, hidden_dim, action_dim):
 		super(QModel, self).__init__()
-		self.fc1 = nn.Linear(state_dim, 64)
-		self.fc2 = nn.Linear(64, 64)
-		self.fc3 = nn.Linear(64, action_dim)
+		self.fc1 = nn.Linear(state_dim,	hidden_dim)
+		self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+		self.fc3 = nn.Linear(hidden_dim, action_dim)
 
 	def forward(self, x):
 		x = torch.relu(self.fc1(x))
@@ -30,4 +30,4 @@ class Train():
 		done = torch.tensor(done, dtype=torch.bool)
 		
 		pred = self.model(state)
-		print(pred)
+		# print(pred)
