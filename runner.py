@@ -11,18 +11,21 @@ MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LR = 0.001
 
+VIEW_DIM = 5
+assert VIEW_DIM % 2 == 1, "View dimension must be odd"
+
 class Runner():
 	def __init__(self):
 		self.n_games = 0
 		self.epsilon = 0
 		self.gamma = 0.9
 
-		self.view_dim = 3
-		self.food_dim = 3
+		self.food_dim = 6
+		self.dir_dim = 4
 		
 		self.memory = deque(maxlen=MAX_MEMORY)
 		
-		self.state_dim = 19
+		self.state_dim = (VIEW_DIM ** 2) + self.food_dim + self.dir_dim
 		self.hidden_dim = 256
 		self.action_dim = 3
 
@@ -63,16 +66,15 @@ def training_loop():
 	score = 0
 	steps = 0
 	record = 0
-	view_dim = 3
 	runner: Runner = Runner()
 	game: QSnake = QSnake()
 
 	while True:
-		state_old = game.get_vision(view_dim)
+		state_old = game.get_vision(VIEW_DIM)
 		final_move = runner.act(state_old)
 
 		reward, dead, score = game.step(final_move)
-		state_new = game.get_vision(view_dim)
+		state_new = game.get_vision(VIEW_DIM)
 
 		runner.train_short(state_old, final_move, reward, state_new, dead)
 
