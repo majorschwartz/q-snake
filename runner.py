@@ -28,8 +28,10 @@ class Runner():
 		if not long:
 			self.trainer.train_step(self.memory[-1][0], self.memory[-1][1], self.memory[-1][2], self.memory[-1][3], self.memory[-1][4])
 		else:
-			for state, action, reward, next_state, dead in self.memory:
-				self.trainer.train_step(state, action, reward, next_state, dead)
+			# for state, action, reward, next_state, dead in self.memory:
+			# 	self.trainer.train_step(state, action, reward, next_state, dead)
+			states, actions, rewards, next_states, deads = zip(*self.memory)
+			self.trainer.train_step(states, actions, rewards, next_states, deads)
 			self.memory = []
 	
 	def act(self, state):
@@ -49,8 +51,8 @@ def training_loop():
 	steps = 0
 	record = 0
 	view_dim = 3
-	runner = Runner()
-	game = QSnake()
+	runner: Runner = Runner()
+	game: QSnake = QSnake()
 
 	while True:
 		# time.sleep(0.005)
@@ -71,6 +73,7 @@ def training_loop():
 
 		runner.remember(state_old, final_move, reward, state_new, dead)
 
+		print(f'memory: {runner.memory}')
 		runner.train_memory()
 
 		if dead:

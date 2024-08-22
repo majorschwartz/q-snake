@@ -70,44 +70,33 @@ class QSnake:
 		self.board[self.food] = 2
 		return reward, False, len(self.snake) - BEGIN_LENGTH
 	
-	def get_state(self, view_dim=3):
+	def get_vision(self, view_dim=3):
 		left_bound_val = 0 - view_dim // 2
 		right_bound_val = view_dim // 2 + 1
 		head = self.snake[-1]
 		
 		# vision array (one-hots)
 		vision = []
-		# food dir ([up: 0, down: 1], [left: 0, right: 1)]
+		# food dir [(up: 0, down: 1), (left: 0, right: 1)]
 		food_dir = [0, 0]
-
-		# for i in range(left_bound_val, right_bound_val):
-		# 	for j in range(left_bound_val, right_bound_val):
-		# 		if head[0] + i < 0 or head[0] + i >= self.board.shape[0] or head[1] + j < 0 or head[1] + j >= self.board.shape[1]:
-		# 			vision.append([1, 0, 0, 0])
-		# 		elif self.board[head[0] + i][head[1] + j] == 0:
-		# 			vision.append([0, 1, 0, 0])
-		# 		elif self.board[head[0] + i][head[1] + j] == 1:
-		# 			vision.append([0, 0, 1, 0])
-		# 		elif self.board[head[0] + i][head[1] + j] == 2:
-		# 			vision.append([0, 0, 0, 1])
 
 		for i in range(left_bound_val, right_bound_val):
 			for j in range(left_bound_val, right_bound_val):
 				if head[0] + i < 0 or head[0] + i >= self.board.shape[0] or head[1] + j < 0 or head[1] + j >= self.board.shape[1]:
-					vision.append(1)
+					vision.append([1, 0, 0, 0]) # wall
 				elif self.board[head[0] + i][head[1] + j] == 0:
-					vision.append(0)
+					vision.append([0, 1, 0, 0]) # empty
 				elif self.board[head[0] + i][head[1] + j] == 1:
-					vision.append(1)
+					vision.append([0, 0, 1, 0]) # snake
 				elif self.board[head[0] + i][head[1] + j] == 2:
-					vision.append(0)
+					vision.append([0, 0, 0, 1]) # food
 
 		if head[0] < self.food[0]:
 			food_dir[0] = 1
 		if head[1] < self.food[1]:
 			food_dir[1] = 1
 
-		return list(np.array(vision).flatten()) + food_dir #+ self.direction
+		return list(np.array(vision).flatten()) + food_dir
 	
 	def display_board(self):
 		for row in self.board:
