@@ -8,13 +8,13 @@ class QModel(nn.Module):
 		super().__init__()
 		self.h1 = nn.Linear(state_dim,	hidden_dim)
 		self.h2 = nn.Linear(hidden_dim, hidden_dim)
-		self.h3 = nn.Linear(hidden_dim, hidden_dim)
+		# self.h3 = nn.Linear(hidden_dim, hidden_dim)
 		self.output = nn.Linear(hidden_dim, action_dim)
 
 	def forward(self, x):
 		x = F.relu(self.h1(x))
 		x = F.relu(self.h2(x))
-		x = F.relu(self.h3(x))
+		# x = F.relu(self.h3(x))
 		return self.output(x)
 
 class Train():

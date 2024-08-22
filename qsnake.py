@@ -1,10 +1,15 @@
+import random
+from enum import Enum
+from collections import namedtuple
 import numpy as np
 
-class Direction():
-	UP = [1, 0, 0, 0]
-	DOWN = [0, 1, 0, 0]
-	LEFT = [0, 0, 1, 0]
-	RIGHT = [0, 0, 0, 1]
+class Direction(Enum):
+	UP = 0
+	DOWN = 1
+	LEFT = 2
+	RIGHT = 3
+
+Point = namedtuple('Point', 'x, y')
 
 ZONE_SIZE = 8
 BEGIN_LENGTH = 3
@@ -16,89 +21,114 @@ class QSnake:
 		self.setup()
 	
 	def setup(self):
-		self.board = np.zeros((self.w, self.h), dtype=np.int8)
+		self.direction = Direction.RIGHT
+
+		self.head = Point(self.w//2, self.h//2)
 		self.snake = [
-			(ZONE_SIZE//2, ZONE_SIZE//2 - 2),
-			(ZONE_SIZE//2, ZONE_SIZE//2 - 1),
-			(ZONE_SIZE//2, ZONE_SIZE//2)
+			self.head,
+			Point(self.head.x-1, self.head.y),
+			Point(self.head.x-2, self.head.y)
 		]
-		for x, y in self.snake:
-			self.board[x, y] = 1
 		self.food = None
+		self.frame = 0
 		self.gen_food()
 	
 	def gen_food(self):
-		self.food = (np.random.randint(0, self.board.shape[0]), np.random.randint(0, self.board.shape[1]))
-		while self.board[self.food] == 1:
-			self.food = (np.random.randint(0, self.board.shape[0]), np.random.randint(0, self.board.shape[1]))
-		self.board[self.food] = 2
+		x = random.randint(0, (self.w-1))
+		y = random.randint(0, (self.h-1))
+		self.food = Point(x, y)
+		if self.food in self.snake:
+			self.gen_food()
 	
-	def move(self, dir):
-		head_y, head_x = self.snake[-1]
+	def collision(self, pt=None):
+		if pt is None:
+			pt = self.head
+		if pt.x > self.w-1 or pt.x < 0 or pt.y > self.h-1 or pt.y < 0:
+			return True
+		if pt in self.snake[1:]:
+			return True
+		return False
+	
+	def move(self, action):
+		clockwise = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
+		idx = clockwise.index(self.direction)
 
-		if dir == Direction.UP:
-			head_y -= 1
-		elif dir == Direction.DOWN:
-			head_y += 1
-		elif dir == Direction.LEFT:
-			head_x -= 1
-		elif dir == Direction.RIGHT:
-			head_x += 1
-		self.snake.append((head_y, head_x))
+		if np.array_equal(action, [1, 0, 0]):
+			new_dir = clockwise[idx] # go straight
+		elif np.array_equal(action, [0, 1, 0]):
+			new_dir = clockwise[(idx+1) % 4] # turn right
+		else:
+			new_dir = clockwise[(idx-1) % 4] # turn left
+
+		self.direction = new_dir
+
+		x = self.head.x
+		y = self.head.y
+
+		if self.direction == Direction.UP:
+			y -= 1
+		elif self.direction == Direction.DOWN:
+			y += 1
+		elif self.direction == Direction.LEFT:
+			x -= 1
+		elif self.direction == Direction.RIGHT:
+			x += 1
+		
+		self.head = Point(x, y)
 	
 	def step(self, choice: Direction):
 		self.move(choice)
-		reward = 0
+		self.snake.insert(0, self.head)
+		self.frame += 1
+		reward = -0.1
 
-		if self.snake[-1] == self.food:
+		if self.head == self.food:
 			self.gen_food()
 			reward = 10
 		else:
-			self.snake.pop(0)
+			self.snake.pop()
 		
-		if self.snake[-1][0] >= self.board.shape[0] or self.snake[-1][0] < 0 or self.snake[-1][1] >= self.board.shape[1] or self.snake[-1][1] < 0:
+		if self.collision() or self.frame > 100*len(self.snake):
 			return -10, True, len(self.snake) - BEGIN_LENGTH
-		
-		if self.snake[-1] in self.snake[:-1]:
-			return -10, True, len(self.snake) - BEGIN_LENGTH
-		
-		self.board = np.zeros((self.w, self.h), dtype=np.int8)
-		for x, y in self.snake:
-			self.board[x, y] = 1
-		self.board[self.food] = 2
+
 		return reward, False, len(self.snake) - BEGIN_LENGTH
 	
 	def get_vision(self, view_dim=3):
 		left_bound_val = 0 - view_dim // 2
 		right_bound_val = view_dim // 2 + 1
-		head = self.snake[-1]
-		
-		# vision array (one-hots)
-		vision = []
-		# food dir [(up: 0, down: 1), (left: 0, right: 1), (inline: 0, not inline: 1)]
-		food_dir = [0, 0, 0]
 
+		# get the head position
+		head = self.snake[0]
+
+		# vision array
+		vision = [
+			# food position
+			self.food.x < self.head.x,  # food left
+			self.food.x > self.head.x,  # food right
+			self.food.y < self.head.y,  # food up
+			self.food.y > self.head.y,  # food down
+			self.food.x == self.head.x, # food in line with head horizontal
+			self.food.y == self.head.y,  # food in line with head vertical
+			# direction
+			self.direction == Direction.LEFT,
+			self.direction == Direction.RIGHT,
+			self.direction == Direction.UP,
+			self.direction == Direction.DOWN
+		]
+
+		# get the view of the snake
 		for i in range(left_bound_val, right_bound_val):
 			for j in range(left_bound_val, right_bound_val):
-				if head[0] + i < 0 or head[0] + i >= self.board.shape[0] or head[1] + j < 0 or head[1] + j >= self.board.shape[1]:
-					vision.append([1, 0, 0, 0]) # wall
-				elif self.board[head[0] + i][head[1] + j] == 0:
-					vision.append([0, 1, 0, 0]) # empty
-				elif self.board[head[0] + i][head[1] + j] == 1:
-					vision.append([0, 0, 1, 0]) # snake
-				elif self.board[head[0] + i][head[1] + j] == 2:
-					vision.append([0, 0, 0, 1]) # food
-
-		if head[0] < self.food[0]:
-			food_dir[0] = 1
-		if head[1] < self.food[1]:
-			food_dir[1] = 1
-		if head[0] == self.food[0] or head[1] == self.food[1]:
-			food_dir[2] = 1
-
-		# print(list(np.array(vision).flatten()) + food_dir)
-		return list(np.array(vision).flatten()) + food_dir
+				# get the point
+				point = Point(head.x + i, head.y + j)
+				# check if point is in the snake or out of bounds
+				if point in self.snake or point.x < 0 or point.x >= self.w or point.y < 0 or point.y >= self.h:
+					vision.append(1)
+				else:
+					vision.append(0)
+		
+		return np.array(vision, dtype=int)
 	
-	def display_board(self):
-		for row in self.board:
-			print("".join("🟩 " if x == 1 else "⬜️ " if x == 0 else "🍎 " for x in row))
+	# def display_board(self):
+	# 	for row in self.board:
+	# 		print("".join("🟩 " if x == 1 else "⬜️ " if x == 0 else "🍎 " for x in row))
