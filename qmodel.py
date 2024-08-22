@@ -8,11 +8,13 @@ class QModel(nn.Module):
 		super().__init__()
 		self.h1 = nn.Linear(state_dim,	hidden_dim)
 		self.h2 = nn.Linear(hidden_dim, hidden_dim)
+		self.h3 = nn.Linear(hidden_dim, hidden_dim)
 		self.output = nn.Linear(hidden_dim, action_dim)
 
 	def forward(self, x):
 		x = F.relu(self.h1(x))
 		x = F.relu(self.h2(x))
+		x = F.relu(self.h3(x))
 		return self.output(x)
 
 class Train():
@@ -39,7 +41,9 @@ class Train():
 			done = (done, )
 
 		# 1: predicted Q values with current state
+		# print(f"{state=}")
 		pred = self.model(state)
+		# print(f"{pred=}")
 
 		target = pred.clone()
 		for idx in range(len(done)):
@@ -48,6 +52,7 @@ class Train():
 				Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx]))
 
 			target[idx][torch.argmax(action[idx]).item()] = Q_new
+			# print(f"{target=}")
     
 		# 2: Q_new = r + y * max(next_predicted Q value) -> only do this if not done
 		# pred.clone()

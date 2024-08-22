@@ -6,18 +6,16 @@ class Direction():
 	LEFT = [0, 0, 1, 0]
 	RIGHT = [0, 0, 0, 1]
 
-ZONE_SIZE = 10
+ZONE_SIZE = 8
 BEGIN_LENGTH = 3
 
 class QSnake:
 	def __init__(self, w=ZONE_SIZE, h=ZONE_SIZE):
 		self.w = w
 		self.h = h
-		self.wait_time = 0.1
 		self.setup()
 	
 	def setup(self):
-		self.direction = Direction.RIGHT
 		self.board = np.zeros((self.w, self.h), dtype=np.int8)
 		self.snake = [
 			(ZONE_SIZE//2, ZONE_SIZE//2 - 2),
@@ -54,15 +52,15 @@ class QSnake:
 
 		if self.snake[-1] == self.food:
 			self.gen_food()
-			reward = 1
+			reward = 10
 		else:
 			self.snake.pop(0)
 		
 		if self.snake[-1][0] >= self.board.shape[0] or self.snake[-1][0] < 0 or self.snake[-1][1] >= self.board.shape[1] or self.snake[-1][1] < 0:
-			return -1, True, len(self.snake) - BEGIN_LENGTH
+			return -10, True, len(self.snake) - BEGIN_LENGTH
 		
 		if self.snake[-1] in self.snake[:-1]:
-			return -1, True, len(self.snake) - BEGIN_LENGTH
+			return -10, True, len(self.snake) - BEGIN_LENGTH
 		
 		self.board = np.zeros((self.w, self.h), dtype=np.int8)
 		for x, y in self.snake:
@@ -77,8 +75,8 @@ class QSnake:
 		
 		# vision array (one-hots)
 		vision = []
-		# food dir [(up: 0, down: 1), (left: 0, right: 1)]
-		food_dir = [0, 0]
+		# food dir [(up: 0, down: 1), (left: 0, right: 1), (inline: 0, not inline: 1)]
+		food_dir = [0, 0, 0]
 
 		for i in range(left_bound_val, right_bound_val):
 			for j in range(left_bound_val, right_bound_val):
@@ -95,7 +93,10 @@ class QSnake:
 			food_dir[0] = 1
 		if head[1] < self.food[1]:
 			food_dir[1] = 1
+		if head[0] == self.food[0] or head[1] == self.food[1]:
+			food_dir[2] = 1
 
+		# print(list(np.array(vision).flatten()) + food_dir)
 		return list(np.array(vision).flatten()) + food_dir
 	
 	def display_board(self):
