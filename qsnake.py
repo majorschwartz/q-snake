@@ -11,7 +11,7 @@ class Direction(Enum):
 
 Point = namedtuple('Point', 'x, y')
 
-ZONE_SIZE = 8
+ZONE_SIZE = 20
 BEGIN_LENGTH = 3
 
 class QSnake:
