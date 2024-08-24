@@ -8,11 +8,14 @@ import time
 from settings import DEBUG, VIEW_DIM, LR, MAX_MEMORY, BATCH_SIZE, GAMMA
 
 device = torch.device("cuda" if cuda.is_available() else "cpu")
+torch.set_default_device(device)
 
 class Runner():
 	def __init__(self):
 		# Initialization creates game counter, epsilon, gamma, the dimensions, and the model + trainer
 		self.n_games = 0
+		self.current_lr = LR
+
 		self.epsilon = 0
 		self.gamma = GAMMA
 
@@ -53,10 +56,12 @@ class Runner():
 			print(f"{states[:2]=}\n{actions[:2]=}\n{rewards[:2]=}\n{next_states[:2]=}\n{dones[:2]=}")
 		# Train the model
 		self.trainer.train_step(states, actions, rewards, next_states, dones)
+		self.current_lr = self.trainer.scheduler.get_last_lr()[0]
 
 	def train_short(self, state, action, reward, next_state, done):
 		# Train the model
 		self.trainer.train_step(state, action, reward, next_state, done)
+		self.current_lr = self.trainer.scheduler.get_last_lr()[0]
 	
 	def act(self, state: torch.Tensor):
 		# Create a move tensor
@@ -121,7 +126,7 @@ def training_loop():
 			steps_per_minute = total_steps / elapsed_time * 60
 			games_per_minute = runner.n_games / elapsed_time * 60
 			minutes, seconds = calculate_minutes_and_seconds(elapsed_time)
-			print(f'Game: {runner.n_games + 1:4d} | Score: {score:3d} | Record: {record:3d} | Steps: {steps:4d} | Steps/min: {steps_per_minute:6.0f} | Games/min: {games_per_minute:4.0f} | Elapsed time: {minutes:2d}m {seconds:2d}s')
+			print(f'Game: {runner.n_games + 1:4d} | Score: {score:3d} | Record: {record:3d} | Steps: {steps:4d} | Steps/min: {steps_per_minute:6.0f} | Games/min: {games_per_minute:4.0f} | Elapsed time: {minutes:2d}m {seconds:2d}s | LR: {runner.current_lr:.5f}')
 			game.setup()
 			runner.n_games += 1
 			runner.train_long()

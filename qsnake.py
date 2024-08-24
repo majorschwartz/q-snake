@@ -5,7 +5,9 @@ import torch
 from typing import Tuple
 from settings import DEBUG
 import torch.cuda as cuda
+
 device = torch.device("cuda" if cuda.is_available() else "cpu")
+torch.set_default_device(device)
 
 class Direction(Enum):
 	UP = 0

@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from settings import DEBUG
 
 device = torch.device("cuda" if cuda.is_available() else "cpu")
+torch.set_default_device(device)
 
 class QModel(nn.Module):
 	def __init__(self, state_dim, hidden_dim, action_dim):
@@ -27,7 +28,10 @@ class Train():
 		self.gamma = gamma
 		self.model = model.to(device)
 		self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
+		self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=5000, gamma=0.9)
 		self.criterion = nn.MSELoss()
+		self.steps = 0
+		self.max_lr_steps = 120_000
 
 	def train_step(self, state: torch.Tensor, action: torch.Tensor, reward: torch.Tensor, next_state: torch.Tensor, done: torch.Tensor):
 		if state.dim() == 1:
@@ -58,3 +62,6 @@ class Train():
 		loss.backward()
 
 		self.optimizer.step()
+		if self.steps < self.max_lr_steps:
+			self.scheduler.step()
+		self.steps += 1
