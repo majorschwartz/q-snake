@@ -35,8 +35,7 @@ class Runner():
 
 	def remember(self, state, action, reward, next_state, dead):
 		# Remember the state, action, reward, next state, and dead
-		print(state.shape, action.shape, reward.shape, next_state.shape, dead.shape)
-		self.memory.append((state.float(), action, reward, next_state.float(), dead))
+		self.memory.append((state, action, reward, next_state, dead))
 	
 	def train_long(self):
 		# If the memory is greater than the batch size, sample a random sample of the memory
@@ -48,12 +47,22 @@ class Runner():
 
 		# Unzip the mini sample into states, actions, rewards, next states, and dones
 		states, actions, rewards, next_states, dones = zip(*mini_sample)
+		
+		# Convert lists to tensors with a batch dimension
+		states = torch.stack(states)
+		actions = torch.stack(actions)
+		rewards = torch.stack(rewards)
+		next_states = torch.stack(next_states)
+		dones = torch.stack(dones)
+		
+		# print(f"{states[:2].shape=}\n{actions[:2].shape=}\n{rewards[:2].shape=}\n{next_states[:2].shape=}\n{dones[:2].shape=}")
+		# print(f"{states[:2]=}\n{actions[:2]=}\n{rewards[:2]=}\n{next_states[:2]=}\n{dones[:2]=}")
 		# Train the model
 		self.trainer.train_step(states, actions, rewards, next_states, dones)
 
 	def train_short(self, state, action, reward, next_state, done):
 		# Train the model
-		self.trainer.train_step(state.float(), action, reward, next_state.float(), done)
+		self.trainer.train_step(state, action, reward, next_state, done)
 	
 	def act(self, state: torch.Tensor):
 		# Create a move tensor
@@ -97,14 +106,16 @@ def training_loop():
 		# Get the old state
 		state_old: torch.Tensor = game.get_vision(VIEW_DIM)
 		# Get the next "final" move
-		final_move = runner.act(state_old)
+		final_move: torch.Tensor = runner.act(state_old)
 
 		# Get the reward, dead, and score from the step we take
 		reward, dead, score = game.step(final_move)
 		# Get the new state
-		state_new = game.get_vision(VIEW_DIM)
+		state_new: torch.Tensor = game.get_vision(VIEW_DIM)
 
 		# Train the model
+		# print(f"{state_old.shape=}\n{final_move.shape=}\n{reward.shape=}\n{state_new.shape=}\n{dead.shape=}")
+		# print(f"{state_old=}\n{final_move=}\n{reward=}\n{state_new=}\n{dead=}")
 		runner.train_short(state_old, final_move, reward, state_new, dead)
 
 		# Remember the state, action, reward, next state, and dead

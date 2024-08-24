@@ -49,11 +49,9 @@ class QSnake:
 	def collision(self, pt: Point = None) -> bool:
 		if pt is None:
 			pt = self.head
-		if pt.x > self.w-1 or pt.x < 0 or pt.y > self.h-1 or pt.y < 0:
+		if not (0 <= pt.x < self.w and 0 <= pt.y < self.h):
 			return True
-		if pt in self.snake[1:]:
-			return True
-		return False
+		return pt in set(self.snake[1:])
 	
 	def move(self, action: torch.Tensor) -> None:
 		# action: torch.Tensor([go straight, turn right, turn left])
@@ -141,8 +139,8 @@ class QSnake:
 		# combine the results
 		vision = torch.cat((vision, in_snake | out_of_bounds.int()))
 
-		print(vision, vision.shape)
-		return vision
+		# print(vision, vision.shape)
+		return vision.float()
 
 	# def display_board(self):
 	# 	for row in self.board:

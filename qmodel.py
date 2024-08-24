@@ -25,14 +25,24 @@ class Train():
 		self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
 		self.criterion = nn.MSELoss()
 
-	def train_step(self, state, action, reward, next_state, done):
+	def train_step(self, state: torch.Tensor, action: torch.Tensor, reward: torch.Tensor, next_state: torch.Tensor, done: torch.Tensor):
+		if state.dim() == 1:
+			state = state.unsqueeze(0)
+			action = action.unsqueeze(0)
+			reward = reward.unsqueeze(0)
+			next_state = next_state.unsqueeze(0)
+			done = done.unsqueeze(0)
+		
+		# print(f"{state.shape=}\n{action.shape=}\n{reward.shape=}\n{next_state.shape=}\n{done.shape=}")
+
 		# Compute Q values for current state
 		pred = self.model(state)
 
 		target = pred.clone()
-		for idx in range(done.shape[0]):
+		for idx in range(done.size(0)):
+			# print(f"{pred[idx]=}\n{reward[idx]=}\n{next_state[idx]=}\n{done[idx]=}")
 			Q_new = reward[idx]
-			if not done[idx]:
+			if not done[idx].item():
 				Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx]))
 
 			target[idx][torch.argmax(action[idx]).item()] = Q_new
