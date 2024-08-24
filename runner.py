@@ -1,62 +1,56 @@
 import random
 import torch
+import torch.cuda as cuda
 from collections import deque
 from qsnake import QSnake
 from qmodel import QModel, Train
 import time
+from settings import DEBUG, VIEW_DIM, LR, MAX_MEMORY, BATCH_SIZE, GAMMA
 
-MAX_MEMORY = 100_000
-BATCH_SIZE = 1000
-LR = 0.0005
-
-VIEW_DIM = 5
-assert VIEW_DIM % 2 == 1, "View dimension must be odd"
+device = torch.device("cuda" if cuda.is_available() else "cpu")
 
 class Runner():
 	def __init__(self):
-
 		# Initialization creates game counter, epsilon, gamma, the dimensions, and the model + trainer
-
 		self.n_games = 0
 		self.epsilon = 0
-		self.gamma = 0.9
+		self.gamma = GAMMA
 
 		self.food_dim = 6
 		self.dir_dim = 4
-		self.memory = deque(maxlen=MAX_MEMORY)
 		
 		self.state_dim = (VIEW_DIM ** 2) + self.food_dim + self.dir_dim
 		self.hidden_dim = 256
 		self.action_dim = 3
+		
+		self.mem_idx = 0
+		self.memory = torch.zeros((MAX_MEMORY, self.state_dim + self.action_dim + 1 + self.state_dim + 1), device=device)
 
-		self.model = QModel(self.state_dim, self.hidden_dim, self.action_dim)
+		self.model = QModel(self.state_dim, self.hidden_dim, self.action_dim).to(device)
 		self.trainer = Train(self.model, lr=LR, gamma=self.gamma)
 		
 
 	def remember(self, state, action, reward, next_state, dead):
 		# Remember the state, action, reward, next state, and dead
-		self.memory.append((state, action, reward, next_state, dead))
+		self.memory[self.mem_idx] = torch.cat((state, action, torch.tensor([reward], device=device), next_state, torch.tensor([dead], device=device)))
+		self.mem_idx = (self.mem_idx + 1) % MAX_MEMORY
 	
 	def train_long(self):
-		# If the memory is greater than the batch size, sample a random sample of the memory
-		if len(self.memory) > BATCH_SIZE:
-			mini_sample = random.sample(self.memory, BATCH_SIZE)
+		if self.mem_idx > BATCH_SIZE:
+			indices = torch.randint(0, self.mem_idx, (BATCH_SIZE,))
+			mini_sample = self.memory[indices]
 		else:
-			# Otherwise, use the entire memory
-			mini_sample = self.memory
+			mini_sample = self.memory[:self.mem_idx]
 
-		# Unzip the mini sample into states, actions, rewards, next states, and dones
-		states, actions, rewards, next_states, dones = zip(*mini_sample)
-		
-		# Convert lists to tensors with a batch dimension
-		states = torch.stack(states)
-		actions = torch.stack(actions)
-		rewards = torch.stack(rewards)
-		next_states = torch.stack(next_states)
-		dones = torch.stack(dones)
-		
-		# print(f"{states[:2].shape=}\n{actions[:2].shape=}\n{rewards[:2].shape=}\n{next_states[:2].shape=}\n{dones[:2].shape=}")
-		# print(f"{states[:2]=}\n{actions[:2]=}\n{rewards[:2]=}\n{next_states[:2]=}\n{dones[:2]=}")
+		states = mini_sample[:, :self.state_dim]
+		actions = mini_sample[:, self.state_dim:self.state_dim + self.action_dim]
+		rewards = mini_sample[:, self.state_dim + self.action_dim]
+		next_states = mini_sample[:, self.state_dim + self.action_dim + 1:-1]
+		dones = mini_sample[:, -1]
+
+		if DEBUG:
+			print(f"{states[:2].shape=}\n{actions[:2].shape=}\n{rewards[:2].shape=}\n{next_states[:2].shape=}\n{dones[:2].shape=}")
+			print(f"{states[:2]=}\n{actions[:2]=}\n{rewards[:2]=}\n{next_states[:2]=}\n{dones[:2]=}")
 		# Train the model
 		self.trainer.train_step(states, actions, rewards, next_states, dones)
 
@@ -114,8 +108,9 @@ def training_loop():
 		state_new: torch.Tensor = game.get_vision(VIEW_DIM)
 
 		# Train the model
-		# print(f"{state_old.shape=}\n{final_move.shape=}\n{reward.shape=}\n{state_new.shape=}\n{dead.shape=}")
-		# print(f"{state_old=}\n{final_move=}\n{reward=}\n{state_new=}\n{dead=}")
+		if DEBUG:
+			print(f"{state_old.shape=}\n{final_move.shape=}\n{reward.shape=}\n{state_new.shape=}\n{dead.shape=}")
+			print(f"{state_old=}\n{final_move=}\n{reward=}\n{state_new=}\n{dead=}")
 		runner.train_short(state_old, final_move, reward, state_new, dead)
 
 		# Remember the state, action, reward, next state, and dead

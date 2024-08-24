@@ -1,9 +1,11 @@
 import random
 from enum import Enum
 from collections import namedtuple
-import numpy as np
 import torch
 from typing import Tuple
+from settings import DEBUG
+import torch.cuda as cuda
+device = torch.device("cuda" if cuda.is_available() else "cpu")
 
 class Direction(Enum):
 	UP = 0
@@ -139,7 +141,8 @@ class QSnake:
 		# combine the results
 		vision = torch.cat((vision, in_snake | out_of_bounds.int()))
 
-		# print(vision, vision.shape)
+		if DEBUG:
+			print(vision, vision.shape)
 		return vision.float()
 
 	# def display_board(self):
