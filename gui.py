@@ -1,23 +1,19 @@
 import TermTk as ttk
-from TermTk.TTkCore.TTkTerm.term import TTkTerm
-import time
-
-root = ttk.TTk()
-
-def wait_for_resize(widget: ttk.TTkLabel):
-	term_size = TTkTerm.getTerminalSize()
-	if term_size.lines < 15:
-		widget.setText(f"Please make the terminal window larger ({term_size.lines}x{term_size.columns})")
-		return False
-	return True
 
 gridLayout = ttk.TTkGridLayout()
-root.setLayout(gridLayout)
+root = ttk.TTk(layout=gridLayout)
 
-label = ttk.TTkLabel(parent=root, text="Loading...")
+LWrap = ttk.TTkGridLayout()
+RWrap = ttk.TTkGridLayout(columnMinWidth=10)
 
-ready = wait_for_resize(label)
-if ready:
-	label.setText("Ready")
+gridLayout.addItem(LWrap, 0, 0)
+
+LWrap.addWidget(ttk.TTkButton(border=True, text="Button1"), 0, 0)
+LWrap.addWidget(ttk.TTkButton(border=True, text="Button2"), 1, 0)
+
+gridLayout.addItem(RWrap, 0, 1)
+
+RWrap.addWidget(ttk.TTkButton(border=True, text="Button3"), 0, 0, 1, 2)
+RWrap.addWidget(ttk.TTkButton(border=True, text="Button4"), 1, 0, 1, 1)
 
 root.mainloop()
