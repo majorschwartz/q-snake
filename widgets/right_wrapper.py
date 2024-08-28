@@ -1,13 +1,17 @@
 import TermTk as ttk
+from widgets.nn_cust import NNCustomization
+from widgets.snake_cust import SnakeCustomization
 
 class RightWrapper:
     def __init__(self):
         self.layout = ttk.TTkGridLayout()
+        self.nn_cust = NNCustomization()
+        self.snake_cust = SnakeCustomization()
         self.setup_widgets()
 
     def setup_widgets(self):
-        self.layout.addWidget(ttk.TTkButton(border=True, text="Right 1"), 0, 0)
-        self.layout.addWidget(ttk.TTkButton(border=True, text="Right 2"), 1, 0)
+        self.layout.addItem(self.nn_cust.get_layout(), 0, 0)
+        self.layout.addItem(self.snake_cust.get_layout(), 1, 0)
 
     def get_layout(self):
         return self.layout

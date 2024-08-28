@@ -1,17 +1,12 @@
 import TermTk as ttk
-from widgets.display_and_stats import DisplayAndStats
-from widgets.graphs import Graphs
 
-class LeftWrapper:
+class NNCustomization:
     def __init__(self):
         self.layout = ttk.TTkGridLayout()
-        self.display_and_stats = DisplayAndStats()
-        self.graphs = Graphs()
         self.setup_widgets()
 
     def setup_widgets(self):
-        self.layout.addItem(self.display_and_stats.get_layout(), 0, 0)
-        self.layout.addItem(self.graphs.get_layout(), 1, 0)
+        self.layout.addWidget(ttk.TTkButton(border=True, text="NN Customization"), 0, 0)
 
     def get_layout(self):
         return self.layout
