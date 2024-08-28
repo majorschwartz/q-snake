@@ -10,8 +10,8 @@ class LeftWrapper:
         self.setup_widgets()
 
     def setup_widgets(self):
-        self.layout.addItem(self.display_and_stats.get_layout(), 0, 0)
-        self.layout.addItem(self.graphs.get_layout(), 1, 0)
+        self.layout.addItem(self.display_and_stats.get_layout(), 1, 0, 2, 1)
+        self.layout.addItem(self.graphs.get_layout(), 3, 0, 1, 1)
 
     def get_layout(self):
         return self.layout
