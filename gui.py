@@ -1,19 +1,15 @@
 import TermTk as ttk
+from widgets.left_wrapper import LeftWrapper
+from widgets.right_wrapper import RightWrapper
 
 gridLayout = ttk.TTkGridLayout()
 root = ttk.TTk(layout=gridLayout)
 
-LWrap = ttk.TTkGridLayout()
-RWrap = ttk.TTkGridLayout(columnMinWidth=10)
+LWrap = LeftWrapper()
+RWrap = RightWrapper()
 
-gridLayout.addItem(LWrap, 0, 0)
+gridLayout.addItem(LWrap.get_layout(), 0, 0, 1, 3)
+gridLayout.addItem(RWrap.get_layout(), 0, 3, 1, 1)
 
-LWrap.addWidget(ttk.TTkButton(border=True, text="Button1"), 0, 0)
-LWrap.addWidget(ttk.TTkButton(border=True, text="Button2"), 1, 0)
-
-gridLayout.addItem(RWrap, 0, 1)
-
-RWrap.addWidget(ttk.TTkButton(border=True, text="Button3"), 0, 0, 1, 2)
-RWrap.addWidget(ttk.TTkButton(border=True, text="Button4"), 1, 0, 1, 1)
 
 root.mainloop()
