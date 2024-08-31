@@ -1,12 +1,15 @@
 import TermTk as ttk
 
-class NNCustomization:
+class Graphs:
     def __init__(self):
-        self.layout = ttk.TTkGridLayout()
+        self.layout = ttk.TTkHBoxLayout()
         self.setup_widgets()
 
     def setup_widgets(self):
-        self.layout.addWidget(ttk.TTkButton(border=True, text="NN Customization"), 0, 0)
+        graph_1 = ttk.TTkLabel(text="Graph 1")
+        graph_2 = ttk.TTkLabel(text="Graph 2")
+        self.layout.addWidget(graph_1, 0, 0)
+        self.layout.addWidget(graph_2, 0, 1)
 
     def get_layout(self):
         return self.layout

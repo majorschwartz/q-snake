@@ -1,17 +1,17 @@
 import TermTk as ttk
-from widgets.display_and_stats import DisplayAndStats
-from widgets.graphs import Graphs
+from widgets.right.nn_cust import NNCustomization
+from widgets.right.snake_cust import SnakeCustomization
 
-class LeftWrapper:
+class RightWrapper:
     def __init__(self):
         self.layout = ttk.TTkGridLayout()
-        self.display_and_stats = DisplayAndStats()
-        self.graphs = Graphs()
+        self.nn_cust = NNCustomization()
+        self.snake_cust = SnakeCustomization()
         self.setup_widgets()
 
     def setup_widgets(self):
-        self.layout.addItem(self.display_and_stats.get_layout(), 1, 0, 2, 1)
-        self.layout.addItem(self.graphs.get_layout(), 3, 0, 1, 1)
+        self.layout.addItem(self.nn_cust.get_layout(), 0, 0)
+        self.layout.addItem(self.snake_cust.get_layout(), 1, 0)
 
     def get_layout(self):
         return self.layout

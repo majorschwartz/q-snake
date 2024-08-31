@@ -1,6 +1,6 @@
 import TermTk as ttk
-from widgets.left_wrapper import LeftWrapper
-from widgets.right_wrapper import RightWrapper
+from widgets.left.left_wrapper import LeftWrapper
+from widgets.right.right_wrapper import RightWrapper
 
 gridLayout = ttk.TTkGridLayout()
 root = ttk.TTk(layout=gridLayout)

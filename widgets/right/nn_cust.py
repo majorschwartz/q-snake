@@ -1,12 +1,13 @@
 import TermTk as ttk
 
-class SnakeCustomization:
+class NNCustomization:
     def __init__(self):
         self.layout = ttk.TTkGridLayout()
         self.setup_widgets()
 
     def setup_widgets(self):
-        self.layout.addWidget(ttk.TTkButton(border=True, text="Snake Customization"), 0, 0)
+        nn_cust_title = ttk.TTkLabel(text="NN Customization")
+        self.layout.addWidget(nn_cust_title, 0, 0)
 
     def get_layout(self):
         return self.layout
